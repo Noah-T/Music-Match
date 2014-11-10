@@ -56,8 +56,8 @@
     <script id="oauth-template" type="text/x-handlebars-template">
       <h2>oAuth info</h2>
       <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+      <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+      <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
       </dl>
     </script>
     
@@ -65,6 +65,8 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
+        playlistIdsArray = [];
+        songIdsArray = [];
       (function() {
 
         /**
@@ -115,8 +117,61 @@
 
                   $('#login').hide();
                   $('#loggedin').show();
+                  playlistSongObjects = [];
+                  
+                  getUserPlaylists = function(usernameParam){
+                    //get list of playlists associated with user
+                    //var myUserId = "andreas.jansson";
+                    var myUserId = usernameParam;
+                    $.ajax({
+                        url: 'https://api.spotify.com/v1/users/' + myUserId + '/playlists',
+                        headers: {
+                          'Authorization': 'Bearer ' + access_token
+                        },
+                        success: function(response) {
+
+                          for (var i = 0; i < response.items.length; i++) {
+                            playlistIdsArray.push(response.items[i].id);
+                          };
+                          
+                          for (var i = playlistIdsArray.length - 1; i >= 0; i--) {
+                            //get data on each individual playlist associated with user 
+                            $.ajax({
+                              url: 'https://api.spotify.com/v1/users/' + myUserId + '/playlists/' + playlistIdsArray[i],
+                              headers: {
+                                'Authorization': 'Bearer ' + access_token
+                              },
+                              success: function(response) {
+                                //console.log(response);
+                                //debugger;
+                                for (var i = 0; i < response.tracks.items.length; i++) {
+                                  var track = response.tracks.items[i].track;
+                                  //for each returned object, push the contents of the playlist on to the array. This should be a list of tracks
+                                  playlistSongObjects.push(track.id);
+                                };
+                                for (var i = 0; i < playlistSongObjects.length; i++) {
+                                  console.log(playlistSongObjects[i]);
+                                };
+                              }
+                            });
+                          };
+                            
+                        }
+                    });
+                  }
+
+                  //console.log(playlistSongObjects)
+                  $("#getUserPlaylists").click(function() {
+                    //getUserPlaylists("namrekcam")
+                      getUserPlaylists(125310539);
+                      getUserPlaylists("namrekcam");
+                    }
+
+                  );
+                  
                 }
             });
+
           } else {
               // render initial screen
               $('#login').show();
@@ -139,9 +194,6 @@
           }, false);
         }
       })();
-      $("getUserPlaylists").click(function(){
-        console.log("user playlist button pressed");
-      });
     </script>
 
     
